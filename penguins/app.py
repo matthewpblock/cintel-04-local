@@ -1,24 +1,25 @@
 import plotly.express as px
+import seaborn as sns
+from palmerpenguins import load_penguins
+
 from shiny.express import input, ui
 from shinywidgets import output_widget, render_widget, render_plotly
 from shiny import render, reactive
-import seaborn as sns
 
-# REDUNDANT CODE TO REMOVE - import palmerpenguins  # This package provides the Palmer Penguins dataset
-from palmerpenguins import load_penguins
-
+# Set the UI to dark mode
 ui.update_dark_mode("dark")
 
 # Add a sidebar
 with ui.sidebar(position="left", bg="#181818", open="open"):
-    ui.update_dark_mode("dark")
     ui.h2("Sidebar")  # Sidebar header
-    # Insert Drop-Down menu
+    
+    # Insert Drop-Down menu for selecting attributes
     ui.input_selectize(
         id="selected_attribute",
         label="Selected Attribute",
         choices=["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"],
     )
+
     # Insert Numeric Input field
     ui.input_numeric(id="plotly_bin_count", label="Bin Count (Plotly)", value=5)
     # Insert a slider input
@@ -47,17 +48,16 @@ with ui.sidebar(position="left", bg="#181818", open="open"):
     # Insert a link
     ui.a(
         "Source code on GitHub",
-        href="https://github.com/matthewpblock/cintel-02-data/tree/main",
+        href="https://github.com/matthewpblock/cintel-04-local",
         target="_blank",
     )
 
 # Main content
 
 # Use the built-in function to load the Palmer Penguins dataset
-# redundant code to remove - penguins_df = palmerpenguins.load_penguins()
 penguins = load_penguins()
 
-ui.page_opts(title="Matt's Penguin Block", fillable=True)  # Insert page header
+ui.page_opts(title="Matt's Flying Penguin Block", fillable=True)  # Insert page header
 with ui.layout_columns():  # Format into columns
 
     with ui.card():
@@ -115,13 +115,16 @@ with ui.card(full_screen=True):
 
     @render_plotly
     def plotly_scatterplot():
+        # Return a scatter plot using Plotly Express
+        # The plot visualizes the relationship between bill length and bill depth
+        # for different species and islands
         return px.scatter(
-            data_frame=filtered_data(),
-            x="bill_length_mm",
-            y="bill_depth_mm",
-            color="species",
-            symbol="island",
-            labels={
+            data_frame=filtered_data(),  # Filtered data for the scatter plot
+            x="bill_length_mm",          # X-axis: Bill length in millimeters
+            y="bill_depth_mm",           # Y-axis: Bill depth in millimeters
+            color="species",             # Color points by species
+            symbol="island",             # Different symbols for different islands
+            labels={                     # Custom labels for the axes and legend
                 "bill_depth_mm": "Bill Depth",
                 "bill_length_mm": "Bill Length",
                 "species": "Species",
@@ -140,7 +143,14 @@ with ui.card(full_screen=True):
 # Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
 
 
+# This decorator marks the function as a reactive calculation.
+# Any output that depends on the reactive function (e.g., filtered_data()) 
+# will be updated when the data changes.
+
 @reactive.calc
 def filtered_data():
+    # Filter the penguins DataFrame based on the selected species and islands
     isFilterMatch = penguins["species"].isin(input.selected_species_list()) & penguins["island"].isin(input.selected_island_list())
+    
+    # Return the filtered DataFrame
     return penguins[isFilterMatch]
